@@ -522,7 +522,7 @@ fn build_item_token_strem(item: ChildItem, trait_body_stream: &mut Vec<TokenTree
                     use ::com_shim::{{IDispatchExt, VariantExt}};
                     Ok(self.get_idispatch().get("{}")?.{}()?)
                 }}"#,
-                    name.clone().unwrap().to_snake_case(),
+                    safe_name(name.clone().unwrap().to_snake_case()),
                     typ.clone().unwrap(),
                     name.clone().unwrap(),
                     typ.clone().unwrap().transformer_from_variant()
@@ -554,5 +554,20 @@ fn build_item_token_strem(item: ChildItem, trait_body_stream: &mut Vec<TokenTree
                 );
             }
         }
+    }
+}
+
+fn safe_name<S: AsRef<str>>(name: S) -> String {
+    let name = name.as_ref();
+    let keywords = vec![
+        "as", "break", "const", "continue", "crate", "else", "enum", "extern", "false", "fn", "for", "if", "impl", "in", "let", "loop",
+        "match", "mod", "move", "mut", "pub", "ref", "return", "self", "Self", "static", "struct", "super", "trait", "true", "type",
+        "unsafe", "use", "where", "while", "async", "await", "dyn", "abstract", "become", "box", "do", "final", "macro", "override",
+        "priv", "typeof", "unsized", "virtual", "yield", "try"
+    ];
+    if keywords.contains(&name) {
+        format!("_{name}")
+    } else {
+        name.to_owned()
     }
 }
