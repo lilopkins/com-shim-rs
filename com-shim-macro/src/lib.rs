@@ -1,6 +1,6 @@
 use std::fmt;
 
-use proc_macro::{self, Delimiter, Group, Ident, Span, TokenStream, TokenTree};
+use proc_macro::{self, Delimiter, Group, TokenStream, TokenTree};
 
 #[proc_macro]
 pub fn com_shim(stream: TokenStream) -> TokenStream {
