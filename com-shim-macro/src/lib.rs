@@ -198,11 +198,13 @@ enum ReturnType {
     I32,
     I64,
     Bool,
+    VariantInto(String),
 }
 impl ReturnType {
     fn transformer_to_variant(&self) -> &str {
         match self {
             Self::None => panic!("none cannot be made into a variant"),
+            Self::VariantInto(_) => panic!("object cannot be made into a variant"),
             Self::String => "from_str",
             Self::I32 => "from_i32",
             Self::I64 => "from_i64",
@@ -212,6 +214,7 @@ impl ReturnType {
     fn transformer_from_variant(&self) -> &str {
         match self {
             Self::None => panic!("no transformer for none"),
+            Self::VariantInto(_) => panic!("no transformer for any object"),
             Self::String => "to_string",
             Self::I32 => "to_i32",
             Self::I64 => "to_i64",
@@ -225,11 +228,12 @@ impl fmt::Display for ReturnType {
             f,
             "{}",
             match self {
-                Self::None => "()",
-                Self::String => "String",
-                Self::I32 => "i32",
-                Self::I64 => "i64",
-                Self::Bool => "bool",
+                Self::None => "()".to_owned(),
+                Self::VariantInto(a) => format!("{a}"),
+                Self::String => "String".to_owned(),
+                Self::I32 => "i32".to_owned(),
+                Self::I64 => "i64".to_owned(),
+                Self::Bool => "bool".to_owned(),
             }
         )
     }
@@ -242,7 +246,7 @@ impl From<&str> for ReturnType {
             "i32" => Self::I32,
             "i64" => Self::I64,
             "bool" => Self::Bool,
-            _ => panic!("Parameter type error: one of the function parameters cannot be transformed by this library.")
+            s => Self::VariantInto(s.to_owned()),
         }
     }
 }
@@ -497,6 +501,7 @@ fn build_item_token_strem(item: ChildItem, trait_body_stream: &mut Vec<TokenTree
 
             let result_transformer = match return_typ {
                 ReturnType::None => "()".to_owned(),
+                ReturnType::VariantInto(target) => format!("{target}::from(r)"),
                 a => format!("r.{}()?", a.transformer_from_variant()),
             };
             trait_body_stream.extend(

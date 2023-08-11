@@ -12,13 +12,20 @@ com_shim! {
     }
 }
 
+pub struct Property;
+impl From<com_shim::VARIANT> for Property {
+    fn from(_value: com_shim::VARIANT) -> Self {
+        unimplemented!()
+    }
+}
+
 com_shim! {
     class GuiTextField: GuiVComponent + GuiComponent {
         CaretPosition: i64,
         DisplayedText: String,
         mut Highlighted: bool,
 
-        fn GetListProperty(String) -> String,
+        fn GetListProperty(String) -> Property,
     }
 }
 
