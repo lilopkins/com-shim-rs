@@ -1,0 +1,34 @@
+name: Publish to crates.io
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  publish:
+    name: Publish
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Install latest rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          default: true
+          override: true
+
+      - name: Build
+        run: cargo build --release
+
+      - name: Sign in to crates.io
+        run: cargo login ${{ secrets.CARGO_TOKEN }}
+
+      - name: Publish macros
+        run: cargo publish -p com-shim-macro
+
+      - name: Publish base library
+        run: cargo publish -p com-shim
