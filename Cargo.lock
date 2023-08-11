@@ -4,7 +4,7 @@ version = 3
 
 [[package]]
 name = "com-shim"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "com-shim-macro 0.1.0",
  "windows",
@@ -21,7 +21,7 @@ dependencies = [
 
 [[package]]
 name = "com-shim-macro"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "heck",
 ]
