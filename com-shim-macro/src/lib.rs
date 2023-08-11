@@ -14,10 +14,7 @@ pub fn com_shim(stream: TokenStream) -> TokenStream {
             if id.to_string() != String::from("class") {
                 panic!("Syntax error: expected `class`");
             }
-            result_stream.extend(vec![TokenTree::Ident(Ident::new(
-                "struct",
-                Span::call_site(),
-            ))]);
+            result_stream.extend("pub struct".parse::<TokenStream>().unwrap());
         }
         _ => panic!("Syntax error: expect `class` ident"),
     }
