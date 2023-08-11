@@ -21,9 +21,6 @@ jobs:
           default: true
           override: true
 
-      - name: Build
-        run: cargo build --release
-
       - name: Sign in to crates.io
         run: cargo login ${{ secrets.CARGO_TOKEN }}
 
