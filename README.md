@@ -1,3 +1,10 @@
+# COM Shim
+
+Easily write interfaces that can read from COM, without worrying about the underlying functionality (unless you want to!).
+
+## Example
+
+```rust
 use com_shim::com_shim;
 
 com_shim! {
@@ -27,3 +34,6 @@ fn main() {
     // let a: GuiTextField;
     // a.get_list_property("property");
 }
+```
+
+You can also see it implemented in the `sap-scripting` package.
