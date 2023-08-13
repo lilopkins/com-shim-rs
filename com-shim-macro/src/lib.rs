@@ -161,7 +161,7 @@ impl fmt::Display for ChildItem {
         match self {
             ChildItem::Invalid => panic!("cannot render invalid option!"),
             ChildItem::Variable { mutable, name, typ } => write!(f, "{}: {} (mutable: {mutable})", name.as_ref().unwrap(), typ.as_ref().unwrap()),
-            ChildItem::Function { name, params, return_typ } => write!(f, "fn {} -> {return_typ:?}", name.as_ref().unwrap()),
+            ChildItem::Function { name, params: _, return_typ } => write!(f, "fn {} -> {return_typ:?}", name.as_ref().unwrap()),
         }
     }
 }
@@ -520,7 +520,7 @@ fn build_item_token_strem(item: ChildItem, trait_body_stream: &mut Vec<TokenTree
 
             let result_transformer = match return_typ {
                 ReturnType::None => "()".to_owned(),
-                ReturnType::VariantInto(target) => format!("{target}::from(r)"),
+                ReturnType::VariantInto(target) => format!("{target}::from(r.to_idispatch()?)"),
                 a => format!("r.{}()?", a.transformer_from_variant()),
             };
             trait_body_stream.extend(
@@ -540,16 +540,19 @@ fn build_item_token_strem(item: ChildItem, trait_body_stream: &mut Vec<TokenTree
         ChildItem::Variable { mutable, name, typ } => {
             // get function
             use heck::*;
+            let get_result = format!(r#"self.get_idispatch().get("{}")?"#, name.clone().unwrap());
+            let last_line = match typ.clone().unwrap() {
+                ReturnType::VariantInto(to) => format!("Ok({to}::from({get_result}.to_idispatch()?.clone()))"),
+                typ => format!("Ok({get_result}.{}()?)", typ.transformer_from_variant()),
+            };
             trait_body_stream.extend(
                 format!(
-                    r#"fn {}(&self) -> ::com_shim::Result<{}> {{
+                    r"fn {}(&self) -> ::com_shim::Result<{}> {{
                     use ::com_shim::{{IDispatchExt, VariantExt}};
-                    Ok(self.get_idispatch().get("{}")?.{}()?)
-                }}"#,
+                    {last_line}
+                }}",
                     safe_name(name.clone().unwrap().to_snake_case()),
                     typ.clone().unwrap(),
-                    name.clone().unwrap(),
-                    typ.clone().unwrap().transformer_from_variant()
                 )
                 .parse::<TokenStream>()
                 .unwrap(),
@@ -557,10 +560,6 @@ fn build_item_token_strem(item: ChildItem, trait_body_stream: &mut Vec<TokenTree
 
             if mutable {
                 // set function
-                // fn $snake_name(&self) -> ::com_shim::Result<$kind> {
-                //     use ::com_shim::IDispatchExt;
-                //     Ok(self.get_idispatch().set($name)?.$transformer()?)
-                // }
                 trait_body_stream.extend(
                     format!(
                         r#"fn set_{}(&self, value: {}) -> ::com_shim::Result<()> {{
