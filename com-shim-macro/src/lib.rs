@@ -2,6 +2,12 @@ use std::fmt;
 
 use proc_macro::{self, Delimiter, Group, TokenStream, TokenTree};
 
+macro_rules! debug_log {
+    ($str:expr$(, $arg:expr)*) => {
+        #[cfg(feature = "debug")] eprintln!($str$(, $arg)*);
+    };
+}
+
 #[proc_macro]
 pub fn com_shim(stream: TokenStream) -> TokenStream {
     let mut result_stream = TokenStream::new();
@@ -28,6 +34,7 @@ pub fn com_shim(stream: TokenStream) -> TokenStream {
         _ => panic!("Syntax error: expect name identifier"),
     }
     let name = name_token.to_string();
+    debug_log!("Generating struct for {}", name);
 
     // Push struct group
     result_stream.extend(
@@ -37,6 +44,7 @@ pub fn com_shim(stream: TokenStream) -> TokenStream {
     );
 
     // Inherit HasIDispatch trait
+    debug_log!("Writing HasIDispatch entry for {}", name);
     result_stream.extend(format!("impl ::com_shim::HasIDispatch for {name} {{ fn get_idispatch(&self) -> &::com_shim::IDispatch {{ &self.inner }} }}").parse::<TokenStream>().unwrap());
 
     if stream_iter
@@ -45,7 +53,6 @@ pub fn com_shim(stream: TokenStream) -> TokenStream {
         .to_string()
         == String::from(":")
     {
-        // TODO Process parent class.
         loop {
             let _separator_token = stream_iter.next().unwrap();
             let parent_token = stream_iter
@@ -53,6 +60,7 @@ pub fn com_shim(stream: TokenStream) -> TokenStream {
                 .expect("Syntax Error: expected identifier of parent class after `:`");
             match parent_token {
                 TokenTree::Ident(id) => {
+                    debug_log!("Class {} has parent {}", name, id.to_string());
                     result_stream.extend(
                         format!("impl {}_Impl for {name} {{}}", id.to_string())
                             .parse::<TokenStream>()
@@ -99,7 +107,9 @@ pub fn com_shim(stream: TokenStream) -> TokenStream {
             }
             // parse group members
             let items = divide_items(group.stream());
+            debug_log!("Trait for {} has items:", name);
             for item in items {
+                debug_log!("  {item}");
                 build_item_token_strem(item, &mut trait_body_stream);
             }
         }
@@ -144,6 +154,16 @@ enum ChildItem {
         params: Option<Group>,
         return_typ: Option<ReturnType>,
     },
+}
+
+impl fmt::Display for ChildItem {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ChildItem::Invalid => panic!("cannot render invalid option!"),
+            ChildItem::Variable { mutable, name, typ } => write!(f, "{}: {} (mutable: {mutable})", name.as_ref().unwrap(), typ.as_ref().unwrap()),
+            ChildItem::Function { name, params, return_typ } => write!(f, "fn {} -> {return_typ:?}", name.as_ref().unwrap()),
+        }
+    }
 }
 
 enum ParamType {
