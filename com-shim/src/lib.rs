@@ -1,6 +1,6 @@
 pub use com_shim_macro::com_shim;
 pub use windows::core::Result;
-use windows::core::GUID;
+use windows::{core::GUID, Win32::System::Com::{VT_UI4, VT_UI8, VT_I8}};
 pub use windows::Win32::System::Com::{IDispatch, VARIANT};
 use windows::Win32::System::Com::{
     DISPATCH_METHOD, DISPATCH_PROPERTYGET, DISPATCH_PROPERTYPUT, DISPPARAMS,
@@ -111,10 +111,14 @@ pub trait VariantExt {
     fn null() -> VARIANT;
     fn from_i32(n: i32) -> VARIANT;
     fn from_i64(n: i64) -> VARIANT;
+    fn from_u32(n: u32) -> VARIANT;
+    fn from_u64(n: u64) -> VARIANT;
     fn from_str<S: AsRef<str>>(s: S) -> VARIANT;
     fn from_bool(b: bool) -> VARIANT;
     fn to_i32(&self) -> core::Result<i32>;
     fn to_i64(&self) -> core::Result<i64>;
+    fn to_u32(&self) -> core::Result<u32>;
+    fn to_u64(&self) -> core::Result<u64>;
     fn to_string(&self) -> core::Result<String>;
     fn to_bool(&self) -> core::Result<bool>;
     fn to_idispatch(&self) -> core::Result<&IDispatch>;
@@ -139,8 +143,24 @@ impl VariantExt for VARIANT {
     fn from_i64(n: i64) -> VARIANT {
         let mut variant = VARIANT::default();
         let mut v00 = VARIANT_0_0::default();
-        v00.vt = VT_I4;
+        v00.vt = VT_I8;
         v00.Anonymous.llVal = n;
+        variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
+        variant
+    }
+    fn from_u32(n: u32) -> VARIANT {
+        let mut variant = VARIANT::default();
+        let mut v00 = VARIANT_0_0::default();
+        v00.vt = VT_UI4;
+        v00.Anonymous.ulVal = n;
+        variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
+        variant
+    }
+    fn from_u64(n: u64) -> VARIANT {
+        let mut variant = VARIANT::default();
+        let mut v00 = VARIANT_0_0::default();
+        v00.vt = VT_UI8;
+        v00.Anonymous.ullVal = n;
         variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
         variant
     }
@@ -177,6 +197,26 @@ impl VariantExt for VARIANT {
             VariantChangeType(&mut new, self, 0, VT_I4)?;
             let v00 = &new.Anonymous.Anonymous;
             let n = v00.Anonymous.llVal;
+            VariantClear(&mut new)?;
+            Ok(n)
+        }
+    }
+    fn to_u32(&self) -> core::Result<u32> {
+        unsafe {
+            let mut new = VARIANT::default();
+            VariantChangeType(&mut new, self, 0, VT_UI4)?;
+            let v00 = &new.Anonymous.Anonymous;
+            let n = v00.Anonymous.ulVal;
+            VariantClear(&mut new)?;
+            Ok(n)
+        }
+    }
+    fn to_u64(&self) -> core::Result<u64> {
+        unsafe {
+            let mut new = VARIANT::default();
+            VariantChangeType(&mut new, self, 0, VT_UI8)?;
+            let v00 = &new.Anonymous.Anonymous;
+            let n = v00.Anonymous.ullVal;
             VariantClear(&mut new)?;
             Ok(n)
         }

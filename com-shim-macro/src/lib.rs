@@ -1,6 +1,12 @@
 use std::fmt;
 
-use proc_macro::{self, Delimiter, Group, Ident, Span, TokenStream, TokenTree};
+use proc_macro::{self, Delimiter, Group, TokenStream, TokenTree};
+
+macro_rules! debug_log {
+    ($str:expr$(, $arg:expr)*) => {
+        #[cfg(feature = "debug")] eprintln!($str$(, $arg)*);
+    };
+}
 
 #[proc_macro]
 pub fn com_shim(stream: TokenStream) -> TokenStream {
@@ -28,6 +34,7 @@ pub fn com_shim(stream: TokenStream) -> TokenStream {
         _ => panic!("Syntax error: expect name identifier"),
     }
     let name = name_token.to_string();
+    debug_log!("Generating struct for {}", name);
 
     // Push struct group
     result_stream.extend(
@@ -37,6 +44,7 @@ pub fn com_shim(stream: TokenStream) -> TokenStream {
     );
 
     // Inherit HasIDispatch trait
+    debug_log!("Writing HasIDispatch entry for {}", name);
     result_stream.extend(format!("impl ::com_shim::HasIDispatch for {name} {{ fn get_idispatch(&self) -> &::com_shim::IDispatch {{ &self.inner }} }}").parse::<TokenStream>().unwrap());
 
     if stream_iter
@@ -45,7 +53,6 @@ pub fn com_shim(stream: TokenStream) -> TokenStream {
         .to_string()
         == String::from(":")
     {
-        // TODO Process parent class.
         loop {
             let _separator_token = stream_iter.next().unwrap();
             let parent_token = stream_iter
@@ -53,6 +60,7 @@ pub fn com_shim(stream: TokenStream) -> TokenStream {
                 .expect("Syntax Error: expected identifier of parent class after `:`");
             match parent_token {
                 TokenTree::Ident(id) => {
+                    debug_log!("Class {} has parent {}", name, id.to_string());
                     result_stream.extend(
                         format!("impl {}_Impl for {name} {{}}", id.to_string())
                             .parse::<TokenStream>()
@@ -99,7 +107,9 @@ pub fn com_shim(stream: TokenStream) -> TokenStream {
             }
             // parse group members
             let items = divide_items(group.stream());
+            debug_log!("Trait for {} has items:", name);
             for item in items {
+                debug_log!("  {item}");
                 build_item_token_strem(item, &mut trait_body_stream);
             }
         }
@@ -109,6 +119,9 @@ pub fn com_shim(stream: TokenStream) -> TokenStream {
         Delimiter::Brace,
         TokenStream::from_iter(trait_body_stream),
     ))]);
+
+    // create From<IDispatch> trait
+    result_stream.extend(format!("impl ::std::convert::From<::com_shim::IDispatch> for {name} {{ fn from(value: ::com_shim::IDispatch) -> Self {{ Self {{ inner: value }} }} }}").parse::<TokenStream>().unwrap());
 
     if stream_iter.next().is_some() {
         panic!("Syntax error: expected end of shim definition.");
@@ -146,10 +159,22 @@ enum ChildItem {
     },
 }
 
+impl fmt::Display for ChildItem {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ChildItem::Invalid => panic!("cannot render invalid option!"),
+            ChildItem::Variable { mutable, name, typ } => write!(f, "{}: {} (mutable: {mutable})", name.as_ref().unwrap(), typ.as_ref().unwrap()),
+            ChildItem::Function { name, params: _, return_typ } => write!(f, "fn {} -> {return_typ:?}", name.as_ref().unwrap()),
+        }
+    }
+}
+
 enum ParamType {
     String,
     I32,
     I64,
+    U32,
+    U64,
     Bool,
 }
 impl ParamType {
@@ -159,6 +184,8 @@ impl ParamType {
             Self::I32 => "from_i32",
             Self::I64 => "from_i64",
             Self::Bool => "from_bool",
+            Self::U32 => "from_u32",
+            Self::U64 => "from_u64",
         }
     }
 }
@@ -171,6 +198,8 @@ impl fmt::Display for ParamType {
                 Self::String => "String",
                 Self::I32 => "i32",
                 Self::I64 => "i64",
+                Self::U32 => "u32",
+                Self::U64 => "u64",
                 Self::Bool => "bool",
             }
         )
@@ -182,6 +211,8 @@ impl From<&str> for ParamType {
             "String" => Self::String,
             "i32" => Self::I32,
             "i64" => Self::I64,
+            "u32" => Self::U32,
+            "u64" => Self::U64,
             "bool" => Self::Bool,
             _ => panic!("Parameter type error: one of the function parameters cannot be transformed by this library.")
         }
@@ -194,6 +225,8 @@ enum ReturnType {
     String,
     I32,
     I64,
+    U32,
+    U64,
     Bool,
     VariantInto(String),
 }
@@ -201,10 +234,12 @@ impl ReturnType {
     fn transformer_to_variant(&self) -> &str {
         match self {
             Self::None => panic!("none cannot be made into a variant"),
-            Self::VariantInto(_) => panic!("object cannot be made into a variant"),
+            Self::VariantInto(kind) => panic!("object {kind} cannot be made into a variant"),
             Self::String => "from_str",
             Self::I32 => "from_i32",
             Self::I64 => "from_i64",
+            Self::U32 => "from_u32",
+            Self::U64 => "from_u64",
             Self::Bool => "from_bool",
         }
     }
@@ -215,6 +250,8 @@ impl ReturnType {
             Self::String => "to_string",
             Self::I32 => "to_i32",
             Self::I64 => "to_i64",
+            Self::U32 => "to_u32",
+            Self::U64 => "to_u64",
             Self::Bool => "to_bool",
         }
     }
@@ -230,6 +267,8 @@ impl fmt::Display for ReturnType {
                 Self::String => "String".to_owned(),
                 Self::I32 => "i32".to_owned(),
                 Self::I64 => "i64".to_owned(),
+                Self::U32 => "u32".to_owned(),
+                Self::U64 => "u64".to_owned(),
                 Self::Bool => "bool".to_owned(),
             }
         )
@@ -242,6 +281,8 @@ impl From<&str> for ReturnType {
             "String" => Self::String,
             "i32" => Self::I32,
             "i64" => Self::I64,
+            "u32" => Self::U32,
+            "u64" => Self::U64,
             "bool" => Self::Bool,
             s => Self::VariantInto(s.to_owned()),
         }
@@ -361,6 +402,8 @@ fn divide_items(stream: TokenStream) -> Vec<ChildItem> {
             DivideItemState::ExpectFnArrow1OrSep => match item {
                 TokenTree::Punct(p) => {
                     if p.as_char() == ',' {
+                        output.push(buffer);
+                        buffer = ChildItem::Invalid;
                         state = DivideItemState::ExpectFnVarNameOrMut;
                     } else if p.as_char() == '-' {
                         state = DivideItemState::ExpectFnArrow2;
@@ -498,7 +541,7 @@ fn build_item_token_strem(item: ChildItem, trait_body_stream: &mut Vec<TokenTree
 
             let result_transformer = match return_typ {
                 ReturnType::None => "()".to_owned(),
-                ReturnType::VariantInto(target) => format!("{target}::from(r)"),
+                ReturnType::VariantInto(target) => format!("{target}::from(r.to_idispatch()?.clone())"),
                 a => format!("r.{}()?", a.transformer_from_variant()),
             };
             trait_body_stream.extend(
@@ -518,16 +561,19 @@ fn build_item_token_strem(item: ChildItem, trait_body_stream: &mut Vec<TokenTree
         ChildItem::Variable { mutable, name, typ } => {
             // get function
             use heck::*;
+            let get_result = format!(r#"self.get_idispatch().get("{}")?"#, name.clone().unwrap());
+            let last_line = match typ.clone().unwrap() {
+                ReturnType::VariantInto(to) => format!("Ok({to}::from({get_result}.to_idispatch()?.clone()))"),
+                typ => format!("Ok({get_result}.{}()?)", typ.transformer_from_variant()),
+            };
             trait_body_stream.extend(
                 format!(
-                    r#"fn {}(&self) -> ::com_shim::Result<{}> {{
+                    r"fn {}(&self) -> ::com_shim::Result<{}> {{
                     use ::com_shim::{{IDispatchExt, VariantExt}};
-                    Ok(self.get_idispatch().get("{}")?.{}()?)
-                }}"#,
+                    {last_line}
+                }}",
                     safe_name(name.clone().unwrap().to_snake_case()),
                     typ.clone().unwrap(),
-                    name.clone().unwrap(),
-                    typ.clone().unwrap().transformer_from_variant()
                 )
                 .parse::<TokenStream>()
                 .unwrap(),
@@ -535,10 +581,6 @@ fn build_item_token_strem(item: ChildItem, trait_body_stream: &mut Vec<TokenTree
 
             if mutable {
                 // set function
-                // fn $snake_name(&self) -> ::com_shim::Result<$kind> {
-                //     use ::com_shim::IDispatchExt;
-                //     Ok(self.get_idispatch().set($name)?.$transformer()?)
-                // }
                 trait_body_stream.extend(
                     format!(
                         r#"fn set_{}(&self, value: {}) -> ::com_shim::Result<()> {{
