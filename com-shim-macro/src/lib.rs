@@ -381,6 +381,8 @@ fn divide_items(stream: TokenStream) -> Vec<ChildItem> {
             DivideItemState::ExpectFnArrow1OrSep => match item {
                 TokenTree::Punct(p) => {
                     if p.as_char() == ',' {
+                        output.push(buffer);
+                        buffer = ChildItem::Invalid;
                         state = DivideItemState::ExpectFnVarNameOrMut;
                     } else if p.as_char() == '-' {
                         state = DivideItemState::ExpectFnArrow2;
