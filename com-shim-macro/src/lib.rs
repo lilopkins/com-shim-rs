@@ -173,6 +173,8 @@ enum ParamType {
     String,
     I32,
     I64,
+    U32,
+    U64,
     Bool,
 }
 impl ParamType {
@@ -182,6 +184,8 @@ impl ParamType {
             Self::I32 => "from_i32",
             Self::I64 => "from_i64",
             Self::Bool => "from_bool",
+            Self::U32 => "from_u32",
+            Self::U64 => "from_u64",
         }
     }
 }
@@ -194,6 +198,8 @@ impl fmt::Display for ParamType {
                 Self::String => "String",
                 Self::I32 => "i32",
                 Self::I64 => "i64",
+                Self::U32 => "u32",
+                Self::U64 => "u64",
                 Self::Bool => "bool",
             }
         )
@@ -205,6 +211,8 @@ impl From<&str> for ParamType {
             "String" => Self::String,
             "i32" => Self::I32,
             "i64" => Self::I64,
+            "u32" => Self::U32,
+            "u64" => Self::U64,
             "bool" => Self::Bool,
             _ => panic!("Parameter type error: one of the function parameters cannot be transformed by this library.")
         }
@@ -217,6 +225,8 @@ enum ReturnType {
     String,
     I32,
     I64,
+    U32,
+    U64,
     Bool,
     VariantInto(String),
 }
@@ -228,6 +238,8 @@ impl ReturnType {
             Self::String => "from_str",
             Self::I32 => "from_i32",
             Self::I64 => "from_i64",
+            Self::U32 => "from_u32",
+            Self::U64 => "from_u64",
             Self::Bool => "from_bool",
         }
     }
@@ -238,6 +250,8 @@ impl ReturnType {
             Self::String => "to_string",
             Self::I32 => "to_i32",
             Self::I64 => "to_i64",
+            Self::U32 => "to_u32",
+            Self::U64 => "to_u64",
             Self::Bool => "to_bool",
         }
     }
@@ -253,6 +267,8 @@ impl fmt::Display for ReturnType {
                 Self::String => "String".to_owned(),
                 Self::I32 => "i32".to_owned(),
                 Self::I64 => "i64".to_owned(),
+                Self::U32 => "u32".to_owned(),
+                Self::U64 => "u64".to_owned(),
                 Self::Bool => "bool".to_owned(),
             }
         )
@@ -265,6 +281,8 @@ impl From<&str> for ReturnType {
             "String" => Self::String,
             "i32" => Self::I32,
             "i64" => Self::I64,
+            "u32" => Self::U32,
+            "u64" => Self::U64,
             "bool" => Self::Bool,
             s => Self::VariantInto(s.to_owned()),
         }
