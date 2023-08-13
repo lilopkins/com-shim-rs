@@ -120,6 +120,9 @@ pub fn com_shim(stream: TokenStream) -> TokenStream {
         TokenStream::from_iter(trait_body_stream),
     ))]);
 
+    // create From<IDispatch> trait
+    result_stream.extend(format!("impl ::std::convert::From<::com_shim::IDispatch> for {name} {{ fn from(value: ::com_shim::IDispatch) -> Self {{ Self {{ inner: value }} }} }}").parse::<TokenStream>().unwrap());
+
     if stream_iter.next().is_some() {
         panic!("Syntax error: expected end of shim definition.");
     }
@@ -221,7 +224,7 @@ impl ReturnType {
     fn transformer_to_variant(&self) -> &str {
         match self {
             Self::None => panic!("none cannot be made into a variant"),
-            Self::VariantInto(_) => panic!("object cannot be made into a variant"),
+            Self::VariantInto(kind) => panic!("object {kind} cannot be made into a variant"),
             Self::String => "from_str",
             Self::I32 => "from_i32",
             Self::I64 => "from_i64",
@@ -520,7 +523,7 @@ fn build_item_token_strem(item: ChildItem, trait_body_stream: &mut Vec<TokenTree
 
             let result_transformer = match return_typ {
                 ReturnType::None => "()".to_owned(),
-                ReturnType::VariantInto(target) => format!("{target}::from(r.to_idispatch()?)"),
+                ReturnType::VariantInto(target) => format!("{target}::from(r.to_idispatch()?.clone())"),
                 a => format!("r.{}()?", a.transformer_from_variant()),
             };
             trait_body_stream.extend(
