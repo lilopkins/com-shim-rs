@@ -36,4 +36,4 @@ fn main() {
 }
 ```
 
-You can also see it implemented in the `sap-scripting` package.
+You can also see it implemented in the [`sap-scripting`](https://github.com/lilopkins/sap-scripting-rs.git) package.
