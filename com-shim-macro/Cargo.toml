@@ -2,6 +2,7 @@
 name = "com-shim-macro"
 description = "Macros for com-shim."
 authors = [ "Lily Hopkins <lily@hpkns.uk>" ]
+repository = "https://github.com/lilopkins/com-shim-rs"
 license = "MIT"
 version = "0.3.0"
 edition = "2021"

@@ -3,6 +3,7 @@ name = "com-shim"
 version = "0.3.0"
 description = "Create safe Rusty shims for COM classes."
 authors = [ "Lily Hopkins <lily@hpkns.uk>" ]
+repository = "https://github.com/lilopkins/com-shim-rs"
 license = "MIT"
 edition = "2021"
 
