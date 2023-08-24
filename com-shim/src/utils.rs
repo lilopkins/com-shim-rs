@@ -12,7 +12,7 @@ where
         let hstring = HSTRING::from(name.as_ref());
         let rgsznames = PCWSTR::from_raw(hstring.as_ptr());
         let cnames = 1;
-        let lcid = 0;
+        let lcid = 0x09; // en
         let mut dispidmember = 0;
 
         disp.GetIDsOfNames(&riid, &rgsznames, cnames, lcid, &mut dispidmember)?;
