@@ -1,21 +1,21 @@
-pub use com_shim_macro::com_shim;
-pub use windows::core::Result;
-use windows::{core::GUID, Win32::System::Com::{VT_UI4, VT_UI8, VT_I8, VT_I2, VT_UI1, VT_UI2}};
-pub use windows::Win32::System::Com::{IDispatch, VARIANT};
-use windows::Win32::System::Com::{
-    DISPATCH_METHOD, DISPATCH_PROPERTYGET, DISPATCH_PROPERTYPUT, DISPPARAMS,
-};
-
 use std::mem::ManuallyDrop;
 
 use windows::{
     core::{self, BSTR},
-    Win32::Foundation::VARIANT_BOOL,
-    Win32::System::{
-        Com::{VARIANT_0_0, VT_BOOL, VT_BSTR, VT_I4, VT_NULL},
-        Ole::{VariantChangeType, VariantClear},
+    Win32::{
+        Foundation::VARIANT_BOOL,
+        System::Com::{DISPATCH_METHOD, DISPATCH_PROPERTYGET, DISPATCH_PROPERTYPUT, DISPPARAMS},
+        System::Variant::{
+            VariantChangeType, VariantClear, VARIANT_0_0, VAR_CHANGE_FLAGS, VT_BOOL, VT_BSTR,
+            VT_I2, VT_I4, VT_I8, VT_NULL, VT_UI1, VT_UI2, VT_UI4, VT_UI8,
+        },
     },
 };
+
+pub use com_shim_macro::com_shim;
+
+pub use windows::core::{Result, GUID};
+pub use windows::Win32::System::{Com::IDispatch, Variant::VARIANT};
 
 mod utils;
 
@@ -213,8 +213,9 @@ impl VariantExt for VARIANT {
     }
     fn to_i16(&self) -> core::Result<i16> {
         unsafe {
+            log::debug!("Own type: {:?}", self.Anonymous.Anonymous.vt);
             let mut new = VARIANT::default();
-            VariantChangeType(&mut new, self, 0, VT_I2)?;
+            VariantChangeType(&mut new, self, VAR_CHANGE_FLAGS(0), VT_I2)?;
             let v00 = &new.Anonymous.Anonymous;
             let n = v00.Anonymous.iVal;
             VariantClear(&mut new)?;
@@ -223,8 +224,9 @@ impl VariantExt for VARIANT {
     }
     fn to_i32(&self) -> core::Result<i32> {
         unsafe {
+            log::debug!("Own type: {:?}", self.Anonymous.Anonymous.vt);
             let mut new = VARIANT::default();
-            VariantChangeType(&mut new, self, 0, VT_I4)?;
+            VariantChangeType(&mut new, self, VAR_CHANGE_FLAGS(0), VT_I4)?;
             let v00 = &new.Anonymous.Anonymous;
             let n = v00.Anonymous.lVal;
             VariantClear(&mut new)?;
@@ -233,8 +235,9 @@ impl VariantExt for VARIANT {
     }
     fn to_i64(&self) -> core::Result<i64> {
         unsafe {
+            log::debug!("Own type: {:?}", self.Anonymous.Anonymous.vt);
             let mut new = VARIANT::default();
-            VariantChangeType(&mut new, self, 0, VT_I8)?;
+            VariantChangeType(&mut new, self, VAR_CHANGE_FLAGS(0), VT_I8)?;
             let v00 = &new.Anonymous.Anonymous;
             let n = v00.Anonymous.llVal;
             VariantClear(&mut new)?;
@@ -243,8 +246,9 @@ impl VariantExt for VARIANT {
     }
     fn to_u8(&self) -> core::Result<u8> {
         unsafe {
+            log::debug!("Own type: {:?}", self.Anonymous.Anonymous.vt);
             let mut new = VARIANT::default();
-            VariantChangeType(&mut new, self, 0, VT_UI1)?;
+            VariantChangeType(&mut new, self, VAR_CHANGE_FLAGS(0), VT_UI1)?;
             let v00 = &new.Anonymous.Anonymous;
             let n = v00.Anonymous.bVal;
             VariantClear(&mut new)?;
@@ -253,8 +257,9 @@ impl VariantExt for VARIANT {
     }
     fn to_u16(&self) -> core::Result<u16> {
         unsafe {
+            log::debug!("Own type: {:?}", self.Anonymous.Anonymous.vt);
             let mut new = VARIANT::default();
-            VariantChangeType(&mut new, self, 0, VT_UI2)?;
+            VariantChangeType(&mut new, self, VAR_CHANGE_FLAGS(0), VT_UI2)?;
             let v00 = &new.Anonymous.Anonymous;
             let n = v00.Anonymous.uiVal;
             VariantClear(&mut new)?;
@@ -263,8 +268,9 @@ impl VariantExt for VARIANT {
     }
     fn to_u32(&self) -> core::Result<u32> {
         unsafe {
+            log::debug!("Own type: {:?}", self.Anonymous.Anonymous.vt);
             let mut new = VARIANT::default();
-            VariantChangeType(&mut new, self, 0, VT_UI4)?;
+            VariantChangeType(&mut new, self, VAR_CHANGE_FLAGS(0), VT_UI4)?;
             let v00 = &new.Anonymous.Anonymous;
             let n = v00.Anonymous.ulVal;
             VariantClear(&mut new)?;
@@ -273,8 +279,9 @@ impl VariantExt for VARIANT {
     }
     fn to_u64(&self) -> core::Result<u64> {
         unsafe {
+            log::debug!("Own type: {:?}", self.Anonymous.Anonymous.vt);
             let mut new = VARIANT::default();
-            VariantChangeType(&mut new, self, 0, VT_UI8)?;
+            VariantChangeType(&mut new, self, VAR_CHANGE_FLAGS(0), VT_UI8)?;
             let v00 = &new.Anonymous.Anonymous;
             let n = v00.Anonymous.ullVal;
             VariantClear(&mut new)?;
@@ -283,8 +290,9 @@ impl VariantExt for VARIANT {
     }
     fn to_string(&self) -> core::Result<String> {
         unsafe {
+            log::debug!("Own type: {:?}", self.Anonymous.Anonymous.vt);
             let mut new = VARIANT::default();
-            VariantChangeType(&mut new, self, 0, VT_BSTR)?;
+            VariantChangeType(&mut new, self, VAR_CHANGE_FLAGS(0), VT_BSTR)?;
             let v00 = &new.Anonymous.Anonymous;
             let str = v00.Anonymous.bstrVal.to_string();
             VariantClear(&mut new)?;
@@ -293,8 +301,9 @@ impl VariantExt for VARIANT {
     }
     fn to_bool(&self) -> core::Result<bool> {
         unsafe {
+            log::debug!("Own type: {:?}", self.Anonymous.Anonymous.vt);
             let mut new = VARIANT::default();
-            VariantChangeType(&mut new, self, 0, VT_BOOL)?;
+            VariantChangeType(&mut new, self, VAR_CHANGE_FLAGS(0), VT_BOOL)?;
             let v00 = &new.Anonymous.Anonymous;
             let b = v00.Anonymous.boolVal.as_bool();
             VariantClear(&mut new)?;
@@ -303,6 +312,7 @@ impl VariantExt for VARIANT {
     }
     fn to_idispatch(&self) -> core::Result<&IDispatch> {
         unsafe {
+            log::debug!("Own type: {:?}", self.Anonymous.Anonymous.vt);
             let v00 = &self.Anonymous.Anonymous;
             let idisp = v00.Anonymous.pdispVal.as_ref().unwrap();
             Ok(idisp)

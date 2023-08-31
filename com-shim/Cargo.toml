@@ -13,4 +13,5 @@ debug = [ "com-shim-macro/debug" ]
 
 [dependencies]
 com-shim-macro = "0.3.4"
-windows = { version = "^0.51", features = [ "Win32_System_Com", "Win32_Foundation", "Win32_System_Ole" ] }
+log = "0.4.20"
+windows = { version = "^0.51", features = [ "Win32_System_Variant", "Win32_System_Com", "Win32_Foundation", "Win32_System_Ole" ] }

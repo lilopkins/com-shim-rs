@@ -163,8 +163,17 @@ impl fmt::Display for ChildItem {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ChildItem::Invalid => panic!("cannot render invalid option!"),
-            ChildItem::Variable { mutable, name, typ } => write!(f, "{}: {} (mutable: {mutable})", name.as_ref().unwrap(), typ.as_ref().unwrap()),
-            ChildItem::Function { name, params: _, return_typ } => write!(f, "fn {} -> {return_typ:?}", name.as_ref().unwrap()),
+            ChildItem::Variable { mutable, name, typ } => write!(
+                f,
+                "{}: {} (mutable: {mutable})",
+                name.as_ref().unwrap(),
+                typ.as_ref().unwrap()
+            ),
+            ChildItem::Function {
+                name,
+                params: _,
+                return_typ,
+            } => write!(f, "fn {} -> {return_typ:?}", name.as_ref().unwrap()),
         }
     }
 }
@@ -568,7 +577,9 @@ fn build_item_token_strem(item: ChildItem, trait_body_stream: &mut Vec<TokenTree
 
             let result_transformer = match return_typ {
                 ReturnType::None => "()".to_owned(),
-                ReturnType::VariantInto(target) => format!("{target}::from(r.to_idispatch()?.clone())"),
+                ReturnType::VariantInto(target) => {
+                    format!("{target}::from(r.to_idispatch()?.clone())")
+                }
                 a => format!("r.{}()?", a.transformer_from_variant()),
             };
             trait_body_stream.extend(
@@ -590,7 +601,9 @@ fn build_item_token_strem(item: ChildItem, trait_body_stream: &mut Vec<TokenTree
             use heck::*;
             let get_result = format!(r#"self.get_idispatch().get("{}")?"#, name.clone().unwrap());
             let last_line = match typ.clone().unwrap() {
-                ReturnType::VariantInto(to) => format!("Ok({to}::from({get_result}.to_idispatch()?.clone()))"),
+                ReturnType::VariantInto(to) => {
+                    format!("Ok({to}::from({get_result}.to_idispatch()?.clone()))")
+                }
                 typ => format!("Ok({get_result}.{}()?)", typ.transformer_from_variant()),
             };
             trait_body_stream.extend(
@@ -631,10 +644,11 @@ fn build_item_token_strem(item: ChildItem, trait_body_stream: &mut Vec<TokenTree
 fn safe_name<S: AsRef<str>>(name: S) -> String {
     let name = name.as_ref();
     let keywords = vec![
-        "as", "break", "const", "continue", "crate", "else", "enum", "extern", "false", "fn", "for", "if", "impl", "in", "let", "loop",
-        "match", "mod", "move", "mut", "pub", "ref", "return", "self", "Self", "static", "struct", "super", "trait", "true", "type",
-        "unsafe", "use", "where", "while", "async", "await", "dyn", "abstract", "become", "box", "do", "final", "macro", "override",
-        "priv", "typeof", "unsized", "virtual", "yield", "try"
+        "as", "break", "const", "continue", "crate", "else", "enum", "extern", "false", "fn",
+        "for", "if", "impl", "in", "let", "loop", "match", "mod", "move", "mut", "pub", "ref",
+        "return", "self", "Self", "static", "struct", "super", "trait", "true", "type", "unsafe",
+        "use", "where", "while", "async", "await", "dyn", "abstract", "become", "box", "do",
+        "final", "macro", "override", "priv", "typeof", "unsized", "virtual", "yield", "try",
     ];
     if keywords.contains(&name) {
         format!("_{name}")
