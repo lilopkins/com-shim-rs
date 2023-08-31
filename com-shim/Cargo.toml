@@ -1,6 +1,6 @@
 [package]
 name = "com-shim"
-version = "0.3.4"
+version = "0.3.5"
 description = "Create safe Rusty shims for COM classes."
 authors = [ "Lily Hopkins <lily@hpkns.uk>" ]
 repository = "https://github.com/lilopkins/com-shim-rs"
@@ -12,6 +12,6 @@ edition = "2021"
 debug = [ "com-shim-macro/debug" ]
 
 [dependencies]
-com-shim-macro = "0.3.4"
+com-shim-macro = "0.3.5"
 log = "0.4.20"
 windows = { version = "^0.51", features = [ "Win32_System_Variant", "Win32_System_Com", "Win32_Foundation", "Win32_System_Ole" ] }
