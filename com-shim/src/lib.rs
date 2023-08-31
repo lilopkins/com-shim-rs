@@ -133,71 +133,89 @@ pub trait VariantExt {
 impl VariantExt for VARIANT {
     fn null() -> VARIANT {
         let mut variant = VARIANT::default();
-        let mut v00 = VARIANT_0_0::default();
-        v00.vt = VT_NULL;
+        let v00 = VARIANT_0_0 {
+            vt: VT_NULL,
+            ..Default::default()
+        };
         variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
         variant
     }
     fn from_i16(n: i16) -> VARIANT {
         let mut variant = VARIANT::default();
-        let mut v00 = VARIANT_0_0::default();
-        v00.vt = VT_I2;
+        let mut v00 = VARIANT_0_0 {
+            vt: VT_I2,
+            ..Default::default()
+        };
         v00.Anonymous.iVal = n;
         variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
         variant
     }
     fn from_i32(n: i32) -> VARIANT {
         let mut variant = VARIANT::default();
-        let mut v00 = VARIANT_0_0::default();
-        v00.vt = VT_I4;
+        let mut v00 = VARIANT_0_0 {
+            vt: VT_I4,
+            ..Default::default()
+        };
         v00.Anonymous.lVal = n;
         variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
         variant
     }
     fn from_i64(n: i64) -> VARIANT {
         let mut variant = VARIANT::default();
-        let mut v00 = VARIANT_0_0::default();
-        v00.vt = VT_I8;
+        let mut v00 = VARIANT_0_0 {
+            vt: VT_I8,
+            ..Default::default()
+        };
         v00.Anonymous.llVal = n;
         variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
         variant
     }
     fn from_u8(n: u8) -> VARIANT {
         let mut variant = VARIANT::default();
-        let mut v00 = VARIANT_0_0::default();
-        v00.vt = VT_UI1;
+        let mut v00 = VARIANT_0_0 {
+            vt: VT_UI1,
+            ..Default::default()
+        };
         v00.Anonymous.bVal = n;
         variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
         variant
     }
     fn from_u16(n: u16) -> VARIANT {
         let mut variant = VARIANT::default();
-        let mut v00 = VARIANT_0_0::default();
-        v00.vt = VT_UI2;
+        let mut v00 = VARIANT_0_0 {
+            vt: VT_UI2,
+            ..Default::default()
+        };
         v00.Anonymous.uiVal = n;
         variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
         variant
     }
     fn from_u32(n: u32) -> VARIANT {
         let mut variant = VARIANT::default();
-        let mut v00 = VARIANT_0_0::default();
-        v00.vt = VT_UI4;
+        let mut v00 = VARIANT_0_0 {
+            vt: VT_UI4,
+            ..Default::default()
+        };
         v00.Anonymous.ulVal = n;
         variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
         variant
     }
     fn from_u64(n: u64) -> VARIANT {
         let mut variant = VARIANT::default();
-        let mut v00 = VARIANT_0_0::default();
-        v00.vt = VT_UI8;
+        let mut v00 = VARIANT_0_0 {
+            vt: VT_UI8,
+            ..Default::default()
+        };
         v00.Anonymous.ullVal = n;
         variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
         variant
     }
     fn from_str<S: AsRef<str>>(s: S) -> VARIANT {
         let mut variant = VARIANT::default();
-        let mut v00 = VARIANT_0_0::default();
-        v00.vt = VT_BSTR;
+        let mut v00 = VARIANT_0_0 {
+            vt: VT_BSTR,
+            ..Default::default()
+        };
         let bstr = BSTR::from(s.as_ref());
         v00.Anonymous.bstrVal = ManuallyDrop::new(bstr);
         variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
@@ -205,8 +223,10 @@ impl VariantExt for VARIANT {
     }
     fn from_bool(b: bool) -> VARIANT {
         let mut variant = VARIANT::default();
-        let mut v00 = VARIANT_0_0::default();
-        v00.vt = VT_BOOL;
+        let mut v00 = VARIANT_0_0 {
+            vt: VT_BOOL,
+            ..Default::default()
+        };
         v00.Anonymous.boolVal = VARIANT_BOOL::from(b);
         variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
         variant

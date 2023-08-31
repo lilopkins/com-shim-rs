@@ -17,7 +17,7 @@ pub fn com_shim(stream: TokenStream) -> TokenStream {
     let class_token = stream_iter.next().expect("Syntax error: expected `class`");
     match class_token {
         TokenTree::Ident(id) => {
-            if id.to_string() != String::from("class") {
+            if id.to_string() != *"class" {
                 panic!("Syntax error: expected `class`");
             }
             result_stream.extend("pub struct".parse::<TokenStream>().unwrap());
@@ -51,7 +51,7 @@ pub fn com_shim(stream: TokenStream) -> TokenStream {
         .peek()
         .expect("Syntax error: expected `:` or start of class")
         .to_string()
-        == String::from(":")
+        == *":"
     {
         loop {
             let _separator_token = stream_iter.next().unwrap();
@@ -60,9 +60,9 @@ pub fn com_shim(stream: TokenStream) -> TokenStream {
                 .expect("Syntax Error: expected identifier of parent class after `:`");
             match parent_token {
                 TokenTree::Ident(id) => {
-                    debug_log!("Class {} has parent {}", name, id.to_string());
+                    debug_log!("Class {} has parent {}", name, id);
                     result_stream.extend(
-                        format!("impl {}_Impl for {name} {{}}", id.to_string())
+                        format!("impl {}_Impl for {name} {{}}", id)
                             .parse::<TokenStream>()
                             .unwrap(),
                     );
@@ -77,7 +77,7 @@ pub fn com_shim(stream: TokenStream) -> TokenStream {
             match next {
                 TokenTree::Group(_) => break,
                 TokenTree::Punct(p) => {
-                    if p.to_string() != String::from("+") {
+                    if p.to_string() != *"+" {
                         panic!("Syntax Error: expected identifier of parent class after `:`");
                     }
                 }
@@ -293,7 +293,7 @@ impl fmt::Display for ReturnType {
             "{}",
             match self {
                 Self::None => "()".to_owned(),
-                Self::VariantInto(a) => format!("{a}"),
+                Self::VariantInto(a) => a.to_string(),
                 Self::String => "String".to_owned(),
                 Self::I16 => "i16".to_owned(),
                 Self::I32 => "i32".to_owned(),
@@ -555,14 +555,12 @@ fn build_item_token_strem(item: ChildItem, trait_body_stream: &mut Vec<TokenTree
             // fn $snake_name(&self) -> crate::Result<()>
             let mut fn_definition = String::new();
             let mut variant_args = String::new();
-            let mut index = 0;
-            for p in parse_param_group(params.unwrap()) {
+            for (index, p) in parse_param_group(params.unwrap()).iter().enumerate() {
                 fn_definition.push_str(&format!("p{index}: {p},"));
                 variant_args.push_str(&format!(
                     "::com_shim::VARIANT::{}(p{index}),",
                     p.transformer_to_variant()
                 ));
-                index += 1;
             }
 
             let return_typ = return_typ.unwrap_or(ReturnType::None);
