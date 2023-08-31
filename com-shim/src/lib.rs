@@ -1,6 +1,6 @@
 pub use com_shim_macro::com_shim;
 pub use windows::core::Result;
-use windows::{core::GUID, Win32::System::Com::{VT_UI4, VT_UI8, VT_I8}};
+use windows::{core::GUID, Win32::System::Com::{VT_UI4, VT_UI8, VT_I8, VT_I2, VT_UI1, VT_UI2}};
 pub use windows::Win32::System::Com::{IDispatch, VARIANT};
 use windows::Win32::System::Com::{
     DISPATCH_METHOD, DISPATCH_PROPERTYGET, DISPATCH_PROPERTYPUT, DISPPARAMS,
@@ -109,14 +109,20 @@ impl IDispatchExt for IDispatch {
 
 pub trait VariantExt {
     fn null() -> VARIANT;
+    fn from_i16(n: i16) -> VARIANT;
     fn from_i32(n: i32) -> VARIANT;
     fn from_i64(n: i64) -> VARIANT;
+    fn from_u8(n: u8) -> VARIANT;
+    fn from_u16(n: u16) -> VARIANT;
     fn from_u32(n: u32) -> VARIANT;
     fn from_u64(n: u64) -> VARIANT;
     fn from_str<S: AsRef<str>>(s: S) -> VARIANT;
     fn from_bool(b: bool) -> VARIANT;
+    fn to_i16(&self) -> core::Result<i16>;
     fn to_i32(&self) -> core::Result<i32>;
     fn to_i64(&self) -> core::Result<i64>;
+    fn to_u8(&self) -> core::Result<u8>;
+    fn to_u16(&self) -> core::Result<u16>;
     fn to_u32(&self) -> core::Result<u32>;
     fn to_u64(&self) -> core::Result<u64>;
     fn to_string(&self) -> core::Result<String>;
@@ -129,6 +135,14 @@ impl VariantExt for VARIANT {
         let mut variant = VARIANT::default();
         let mut v00 = VARIANT_0_0::default();
         v00.vt = VT_NULL;
+        variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
+        variant
+    }
+    fn from_i16(n: i16) -> VARIANT {
+        let mut variant = VARIANT::default();
+        let mut v00 = VARIANT_0_0::default();
+        v00.vt = VT_I2;
+        v00.Anonymous.iVal = n;
         variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
         variant
     }
@@ -145,6 +159,22 @@ impl VariantExt for VARIANT {
         let mut v00 = VARIANT_0_0::default();
         v00.vt = VT_I8;
         v00.Anonymous.llVal = n;
+        variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
+        variant
+    }
+    fn from_u8(n: u8) -> VARIANT {
+        let mut variant = VARIANT::default();
+        let mut v00 = VARIANT_0_0::default();
+        v00.vt = VT_UI1;
+        v00.Anonymous.bVal = n;
+        variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
+        variant
+    }
+    fn from_u16(n: u16) -> VARIANT {
+        let mut variant = VARIANT::default();
+        let mut v00 = VARIANT_0_0::default();
+        v00.vt = VT_UI2;
+        v00.Anonymous.uiVal = n;
         variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
         variant
     }
@@ -181,6 +211,16 @@ impl VariantExt for VARIANT {
         variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
         variant
     }
+    fn to_i16(&self) -> core::Result<i16> {
+        unsafe {
+            let mut new = VARIANT::default();
+            VariantChangeType(&mut new, self, 0, VT_I2)?;
+            let v00 = &new.Anonymous.Anonymous;
+            let n = v00.Anonymous.iVal;
+            VariantClear(&mut new)?;
+            Ok(n)
+        }
+    }
     fn to_i32(&self) -> core::Result<i32> {
         unsafe {
             let mut new = VARIANT::default();
@@ -194,9 +234,29 @@ impl VariantExt for VARIANT {
     fn to_i64(&self) -> core::Result<i64> {
         unsafe {
             let mut new = VARIANT::default();
-            VariantChangeType(&mut new, self, 0, VT_I4)?;
+            VariantChangeType(&mut new, self, 0, VT_I8)?;
             let v00 = &new.Anonymous.Anonymous;
             let n = v00.Anonymous.llVal;
+            VariantClear(&mut new)?;
+            Ok(n)
+        }
+    }
+    fn to_u8(&self) -> core::Result<u8> {
+        unsafe {
+            let mut new = VARIANT::default();
+            VariantChangeType(&mut new, self, 0, VT_UI1)?;
+            let v00 = &new.Anonymous.Anonymous;
+            let n = v00.Anonymous.bVal;
+            VariantClear(&mut new)?;
+            Ok(n)
+        }
+    }
+    fn to_u16(&self) -> core::Result<u16> {
+        unsafe {
+            let mut new = VARIANT::default();
+            VariantChangeType(&mut new, self, 0, VT_UI2)?;
+            let v00 = &new.Anonymous.Anonymous;
+            let n = v00.Anonymous.uiVal;
             VariantClear(&mut new)?;
             Ok(n)
         }
