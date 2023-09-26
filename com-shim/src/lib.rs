@@ -50,6 +50,7 @@ impl IDispatchExt for IDispatch {
         let iid_null = GUID::zeroed();
         let mut result = VARIANT::null();
         unsafe {
+            log::debug!("Invoking method: {}", name.as_ref());
             self.Invoke(
                 utils::get_method_dispid(self, name)?,
                 &iid_null,

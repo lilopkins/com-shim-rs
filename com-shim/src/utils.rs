@@ -21,6 +21,7 @@ where
 }
 
 pub(crate) fn assemble_dispparams_get(mut args: Vec<VARIANT>) -> DISPPARAMS {
+    args.reverse(); // https://stackoverflow.com/a/65255739
     DISPPARAMS {
         rgvarg: args.as_mut_ptr(),
         cArgs: args.len() as u32,

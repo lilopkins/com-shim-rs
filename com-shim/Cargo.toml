@@ -1,6 +1,6 @@
 [package]
 name = "com-shim"
-version = "0.3.5"
+version = "0.3.6"
 description = "Create safe Rusty shims for COM classes."
 authors = [ "Lily Hopkins <lily@hpkns.uk>" ]
 repository = "https://github.com/lilopkins/com-shim-rs"
