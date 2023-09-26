@@ -4,25 +4,25 @@ version = 3
 
 [[package]]
 name = "com-shim"
-version = "0.3.4"
+version = "0.3.6"
 dependencies = [
- "com-shim-macro 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "com-shim-macro 0.3.5",
  "log",
  "windows",
 ]
 
 [[package]]
 name = "com-shim-macro"
-version = "0.3.4"
+version = "0.3.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4a147e680fe095ccb3031b3ddf1dbf47ddf77a03d81fed0215d2a541f673c834"
 dependencies = [
  "heck",
 ]
 
 [[package]]
 name = "com-shim-macro"
-version = "0.3.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4c28237b3ad44461f9109728aa1fa34ab69601a76145df6f9e841bd97157b6e8"
+version = "0.3.6"
 dependencies = [
  "heck",
 ]
