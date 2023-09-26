@@ -334,7 +334,10 @@ impl VariantExt for VARIANT {
         unsafe {
             log::debug!("Own type: {:?}", self.Anonymous.Anonymous.vt);
             let v00 = &self.Anonymous.Anonymous;
-            let idisp = v00.Anonymous.pdispVal.as_ref().unwrap();
+            let idisp = v00.Anonymous.pdispVal.as_ref().ok_or(core::Error::new(
+                core::HRESULT(0x00123456),
+                core::HSTRING::from("com-shim: Cannot read IDispatch"),
+            ))?;
             Ok(idisp)
         }
     }
