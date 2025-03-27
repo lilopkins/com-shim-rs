@@ -3,8 +3,8 @@ use std::fmt;
 use proc_macro::{self, Delimiter, Group, TokenStream, TokenTree};
 
 macro_rules! debug_log {
-    ($str:expr$(, $arg:expr)*) => {
-        #[cfg(feature = "debug")] eprintln!($str$(, $arg)*);
+    ($($arg:expr),*) => {
+        #[cfg(feature = "debug")] eprintln!($($arg),*);
     };
 }
 
