@@ -1,6 +1,6 @@
 use windows::{
-    core::*,
     Win32::System::{Com::*, Ole::*, Variant::*},
+    core::*,
 };
 
 pub(crate) fn get_method_dispid<S>(disp: &IDispatch, name: S) -> Result<i32>

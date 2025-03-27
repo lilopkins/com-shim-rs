@@ -1,3 +1,6 @@
+#![deny(unsafe_code)]
+#![warn(clippy::pedantic)]
+
 use std::fmt;
 
 use proc_macro::{self, Delimiter, Group, TokenStream, TokenTree};
@@ -17,9 +20,7 @@ pub fn com_shim(stream: TokenStream) -> TokenStream {
     let class_token = stream_iter.next().expect("Syntax error: expected `class`");
     match class_token {
         TokenTree::Ident(id) => {
-            if id.to_string() != *"class" {
-                panic!("Syntax error: expected `class`");
-            }
+            assert!(id.to_string() == *"class", "Syntax error: expected `class`");
             result_stream.extend("pub struct".parse::<TokenStream>().unwrap());
         }
         _ => panic!("Syntax error: expect `class` ident"),
@@ -29,7 +30,7 @@ pub fn com_shim(stream: TokenStream) -> TokenStream {
     let name_token = stream_iter.next().expect("Syntax error: expected name");
     match &name_token {
         proc_macro::TokenTree::Ident(id) => {
-            result_stream.extend(vec![TokenTree::Ident(id.clone())])
+            result_stream.extend(vec![TokenTree::Ident(id.clone())]);
         }
         _ => panic!("Syntax error: expect name identifier"),
     }
@@ -62,7 +63,7 @@ pub fn com_shim(stream: TokenStream) -> TokenStream {
                 TokenTree::Ident(id) => {
                     debug_log!("Class {} has parent {}", name, id);
                     result_stream.extend(
-                        format!("impl {}_Impl for {name} {{}}", id)
+                        format!("impl {id}_Impl for {name} {{}}")
                             .parse::<TokenStream>()
                             .unwrap(),
                     );
@@ -77,9 +78,10 @@ pub fn com_shim(stream: TokenStream) -> TokenStream {
             match next {
                 TokenTree::Group(_) => break,
                 TokenTree::Punct(p) => {
-                    if p.to_string() != *"+" {
-                        panic!("Syntax Error: expected identifier of parent class after `:`");
-                    }
+                    assert!(
+                        p.to_string() == *"+",
+                        "Syntax Error: expected identifier of parent class after `:`"
+                    );
                 }
                 _ => panic!("Syntax Error: expected identifier of parent class after `:`"),
             }
@@ -94,7 +96,13 @@ pub fn com_shim(stream: TokenStream) -> TokenStream {
 
     // create trait for this impl
     //  { ... }
-    result_stream.extend(format!("pub trait {name}_Impl<T: ::com_shim::HasIDispatch = Self>: ::com_shim::HasIDispatch<T>").parse::<TokenStream>().unwrap());
+    result_stream.extend(
+        format!(
+            "pub trait {name}_Impl<T: ::com_shim::HasIDispatch = Self>: ::com_shim::HasIDispatch<T>"
+        )
+        .parse::<TokenStream>()
+        .unwrap(),
+    );
 
     let mut trait_body_stream: Vec<TokenTree> = Vec::new();
     match stream_iter
@@ -102,9 +110,10 @@ pub fn com_shim(stream: TokenStream) -> TokenStream {
         .expect("Syntax error: expected `{ ... }`")
     {
         TokenTree::Group(group) => {
-            if group.delimiter() != Delimiter::Brace {
-                panic!("Syntax error: expected `{{ ... }}`");
-            }
+            assert!(
+                !(group.delimiter() != Delimiter::Brace),
+                "Syntax error: expected `{{ ... }}`"
+            );
             // parse group members
             let items = divide_items(group.stream());
             debug_log!("Trait for {} has items:", name);
@@ -123,9 +132,10 @@ pub fn com_shim(stream: TokenStream) -> TokenStream {
     // create From<IDispatch> trait
     result_stream.extend(format!("impl ::std::convert::From<::com_shim::IDispatch> for {name} {{ fn from(value: ::com_shim::IDispatch) -> Self {{ Self {{ inner: value }} }} }}").parse::<TokenStream>().unwrap());
 
-    if stream_iter.next().is_some() {
-        panic!("Syntax error: expected end of shim definition.");
-    }
+    assert!(
+        stream_iter.next().is_none(),
+        "Syntax error: expected end of shim definition."
+    );
 
     result_stream
 }
@@ -235,7 +245,9 @@ impl From<&str> for ParamType {
             "u32" => Self::U32,
             "u64" => Self::U64,
             "bool" => Self::Bool,
-            _ => panic!("Parameter type error: one of the function parameters cannot be transformed by this library.")
+            _ => panic!(
+                "Parameter type error: one of the function parameters cannot be transformed by this library."
+            ),
         }
     }
 }
@@ -375,9 +387,7 @@ fn divide_items(stream: TokenStream) -> Vec<ChildItem> {
             },
             DivideItemState::ExpectVarSep => match item {
                 TokenTree::Punct(p) => {
-                    if p.as_char() != ':' {
-                        panic!("Syntax error: expected `:`");
-                    }
+                    assert!(p.as_char() == ':', "Syntax error: expected `:`");
                     state = DivideItemState::ExpectVarType;
                 }
                 _ => panic!("Syntax error: expected `:`"),
@@ -398,9 +408,7 @@ fn divide_items(stream: TokenStream) -> Vec<ChildItem> {
             },
             DivideItemState::ExpectSep => match item {
                 TokenTree::Punct(p) => {
-                    if p.as_char() != ',' {
-                        panic!("Syntax error: expected `,`");
-                    }
+                    assert!(p.as_char() == ',', "Syntax error: expected `,`");
                     output.push(buffer);
                     buffer = ChildItem::Invalid;
                     state = DivideItemState::ExpectFnVarNameOrMut;
@@ -451,9 +459,7 @@ fn divide_items(stream: TokenStream) -> Vec<ChildItem> {
             },
             DivideItemState::ExpectFnArrow2 => match item {
                 TokenTree::Punct(p) => {
-                    if p.as_char() != '>' {
-                        panic!("Syntax error: expected `->`");
-                    }
+                    assert!(p.as_char() == '>', "Syntax error: expected `->`");
                     state = DivideItemState::ExpectFnReturnType;
                 }
                 _ => panic!("Syntax error: expected `->`"),
@@ -483,9 +489,9 @@ fn divide_items(stream: TokenStream) -> Vec<ChildItem> {
         DivideItemState::ExpectVarName => panic!("Syntax error: expected variable name"),
         DivideItemState::ExpectVarSep => panic!("Syntax error: expected `:`"),
         DivideItemState::ExpectVarType => panic!("Syntax error: expected variable type"),
-        DivideItemState::ExpectFnArrow1OrSep => (),
-        DivideItemState::ExpectFnVarNameOrMut => (),
-        DivideItemState::ExpectSep => (),
+        DivideItemState::ExpectFnArrow1OrSep
+        | DivideItemState::ExpectFnVarNameOrMut
+        | DivideItemState::ExpectSep => (),
     }
 
     match buffer {
@@ -494,8 +500,8 @@ fn divide_items(stream: TokenStream) -> Vec<ChildItem> {
             name: _,
             params: _,
             return_typ: _,
-        } => output.push(buffer),
-        ChildItem::Variable {
+        }
+        | ChildItem::Variable {
             mutable: _,
             name: _,
             typ: _,
@@ -505,11 +511,12 @@ fn divide_items(stream: TokenStream) -> Vec<ChildItem> {
     output
 }
 
-fn parse_param_group(params: Group) -> Vec<ParamType> {
+fn parse_param_group(params: &Group) -> Vec<ParamType> {
     let mut output = Vec::new();
-    if params.delimiter() != Delimiter::Parenthesis {
-        panic!("Syntax error: expected `(... params ...)`");
-    }
+    assert!(
+        !(params.delimiter() != Delimiter::Parenthesis),
+        "Syntax error: expected `(... params ...)`"
+    );
     let mut is_separator = false;
     for item in params.stream() {
         match item {
@@ -523,9 +530,7 @@ fn parse_param_group(params: Group) -> Vec<ParamType> {
             }
             TokenTree::Punct(p) => {
                 if is_separator {
-                    if p.as_char() != ',' {
-                        panic!("Syntax error: expected `,`");
-                    }
+                    assert!(p.as_char() == ',', "Syntax error: expected `,`");
                     is_separator = false;
                 } else {
                     panic!("Syntax error: expected parameter type");
@@ -551,11 +556,14 @@ fn build_item_token_strem(item: ChildItem, trait_body_stream: &mut Vec<TokenTree
             params,
             return_typ,
         } => {
-            use heck::*;
+            use heck::ToSnakeCase;
             // fn $snake_name(&self) -> crate::Result<()>
             let mut fn_definition = String::new();
             let mut variant_args = String::new();
-            for (index, p) in parse_param_group(params.unwrap()).iter().enumerate() {
+            for (index, p) in parse_param_group(params.as_ref().unwrap())
+                .iter()
+                .enumerate()
+            {
                 fn_definition.push_str(&format!("p{index}: {p},"));
                 variant_args.push_str(&format!(
                     "::com_shim::VARIANT::{}(p{index}),",
@@ -596,7 +604,7 @@ fn build_item_token_strem(item: ChildItem, trait_body_stream: &mut Vec<TokenTree
         }
         ChildItem::Variable { mutable, name, typ } => {
             // get function
-            use heck::*;
+            use heck::ToSnakeCase;
             let get_result = format!(r#"self.get_idispatch().get("{}")?"#, name.clone().unwrap());
             let last_line = match typ.clone().unwrap() {
                 ReturnType::VariantInto(to) => {

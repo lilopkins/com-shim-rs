@@ -1,21 +1,21 @@
 use std::mem::ManuallyDrop;
 
 use windows::{
-    core::{self, BSTR},
     Win32::{
         Foundation::VARIANT_BOOL,
         System::Com::{DISPATCH_METHOD, DISPATCH_PROPERTYGET, DISPATCH_PROPERTYPUT, DISPPARAMS},
         System::Variant::{
-            VariantChangeType, VariantClear, VARIANT_0_0, VAR_CHANGE_FLAGS, VT_BOOL, VT_BSTR,
-            VT_I2, VT_I4, VT_I8, VT_NULL, VT_UI1, VT_UI2, VT_UI4, VT_UI8,
+            VAR_CHANGE_FLAGS, VARIANT_0_0, VT_BOOL, VT_BSTR, VT_I2, VT_I4, VT_I8, VT_NULL, VT_UI1,
+            VT_UI2, VT_UI4, VT_UI8, VariantChangeType, VariantClear,
         },
     },
+    core::{self, BSTR},
 };
 
 pub use com_shim_macro::com_shim;
 
-pub use windows::core::{Result, GUID};
 pub use windows::Win32::System::{Com::IDispatch, Variant::VARIANT};
+pub use windows::core::{GUID, Result};
 
 mod utils;
 
