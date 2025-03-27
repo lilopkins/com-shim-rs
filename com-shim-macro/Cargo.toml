@@ -4,8 +4,8 @@ description = "Macros for com-shim."
 authors = [ "Lily Hopkins <lily@hpkns.uk>" ]
 repository = "https://github.com/lilopkins/com-shim-rs"
 license = "MIT"
-version = "0.3.6"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

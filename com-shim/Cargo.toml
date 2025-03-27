@@ -1,11 +1,11 @@
 [package]
 name = "com-shim"
-version = "0.3.6"
+version.workspace = true
 description = "Create safe Rusty shims for COM classes."
 authors = [ "Lily Hopkins <lily@hpkns.uk>" ]
 repository = "https://github.com/lilopkins/com-shim-rs"
 license = "MIT"
-edition = "2021"
+edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
