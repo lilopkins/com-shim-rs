@@ -6,5 +6,5 @@ members = [
 ]
 
 [workspace.package]
-version = "0.4.2" # also bump version in com-shim/Cargo.toml!
+version = "0.4.3" # also bump version in com-shim/Cargo.toml!
 edition = "2024"
