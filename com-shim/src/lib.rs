@@ -50,7 +50,7 @@ pub trait IDispatchExt {
 }
 
 impl IDispatchExt for IDispatch {
-    fn call<S>(&self, name: S, args: Vec<VARIANT>) -> Result<VARIANT>
+    fn call<S>(&self, name: S, mut args: Vec<VARIANT>) -> Result<VARIANT>
     where
         S: AsRef<str>,
     {
@@ -63,7 +63,7 @@ impl IDispatchExt for IDispatch {
                 &iid_null,
                 0,
                 DISPATCH_METHOD,
-                &utils::assemble_dispparams_get(args),
+                &utils::assemble_dispparams_get(&mut args),
                 Some(&mut result),
                 None,
                 None,
@@ -99,13 +99,14 @@ impl IDispatchExt for IDispatch {
     {
         let iid_null = GUID::zeroed();
         let mut result = VARIANT::null();
+        let mut args = vec![value];
         unsafe {
             self.Invoke(
                 utils::get_method_dispid(self, name)?,
                 &iid_null,
                 0,
                 DISPATCH_PROPERTYPUT,
-                &utils::assemble_dispparams_put(vec![value]),
+                &utils::assemble_dispparams_put(&mut args),
                 Some(&mut result),
                 None,
                 None,
