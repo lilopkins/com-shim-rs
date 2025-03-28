@@ -5,6 +5,8 @@ com_shim! {
     struct GuiComponent {
         /// The component's text
         Text: String,
+        /// The component type
+        r#Type: String,
     }
 }
 
@@ -28,6 +30,8 @@ com_shim! {
 
         /// Get a property from the component
         fn GetListProperty(String) -> GuiComponent,
+        /// Get a property value from the component
+        fn GetListPropertyValue(String, String) -> GuiComponent,
     }
 }
 
