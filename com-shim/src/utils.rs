@@ -20,7 +20,7 @@ where
     }
 }
 
-pub(crate) fn assemble_dispparams_get(mut args: Vec<VARIANT>) -> DISPPARAMS {
+pub(crate) fn assemble_dispparams_get(args: &mut Vec<VARIANT>) -> DISPPARAMS {
     args.reverse(); // https://stackoverflow.com/a/65255739
     DISPPARAMS {
         rgvarg: args.as_mut_ptr(),
@@ -29,12 +29,13 @@ pub(crate) fn assemble_dispparams_get(mut args: Vec<VARIANT>) -> DISPPARAMS {
     }
 }
 
-pub(crate) fn assemble_dispparams_put(mut args: Vec<VARIANT>) -> DISPPARAMS {
-    let mut named_args = vec![DISPID_PROPERTYPUT];
+static PUT_NAMED_ARGS: [i32; 1] = [DISPID_PROPERTYPUT];
+
+pub(crate) fn assemble_dispparams_put(args: &mut Vec<VARIANT>) -> DISPPARAMS {
     DISPPARAMS {
         rgvarg: args.as_mut_ptr(),
         cArgs: args.len() as u32,
-        cNamedArgs: named_args.len() as u32,
-        rgdispidNamedArgs: named_args.as_mut_ptr(),
+        cNamedArgs: PUT_NAMED_ARGS.len() as u32,
+        rgdispidNamedArgs: PUT_NAMED_ARGS.as_ptr().cast_mut(),
     }
 }
