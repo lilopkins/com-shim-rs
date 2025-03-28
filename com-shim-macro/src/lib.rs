@@ -210,6 +210,13 @@ pub fn com_shim(stream: TokenStream) -> TokenStream {
 
     let functions_and_variables = functions_and_variables.into_iter();
     let self_impl = Ident::new(&format!("{ident}Ext"), ident.span());
+    let inherited_casts = inherited.iter().map(|i| quote! {
+        impl ::com_shim::IsA<#i> for #ident {
+            fn upcast(&self) -> #i {
+                #i::from(self.inner.clone())
+            }
+        }
+    });
     let inherited_impls = inherited
         .iter()
         .map(|i| Ident::new(&format!("{i}Ext"), i.span()));
@@ -232,6 +239,8 @@ pub fn com_shim(stream: TokenStream) -> TokenStream {
         impl #self_impl for #ident {}
 
         #(impl #inherited_impls for #ident {})*
+
+        #(#inherited_casts)*
 
         impl ::std::convert::From<::com_shim::IDispatch> for #ident {
             fn from(value: ::com_shim::IDispatch) -> Self {
