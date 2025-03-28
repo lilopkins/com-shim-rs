@@ -1,17 +1,15 @@
 [package]
 name = "com-shim"
-version = "0.3.6"
+version.workspace = true
 description = "Create safe Rusty shims for COM classes."
 authors = [ "Lily Hopkins <lily@hpkns.uk>" ]
 repository = "https://github.com/lilopkins/com-shim-rs"
 license = "MIT"
-edition = "2021"
+edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-[features]
-debug = [ "com-shim-macro/debug" ]
 
 [dependencies]
-com-shim-macro = "0.3.5"
-log = "0.4.20"
-windows = { version = "^0.51", features = [ "Win32_System_Variant", "Win32_System_Com", "Win32_Foundation", "Win32_System_Ole" ] }
+com-shim-macro = { version = "0.4.0", path = "../com-shim-macro" }
+tracing = "0.1.41"
+windows = { version = "0.52.0", features = [ "Win32_System_Variant", "Win32_System_Com", "Win32_Foundation", "Win32_System_Ole" ] }
