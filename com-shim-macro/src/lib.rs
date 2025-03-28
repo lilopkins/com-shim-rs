@@ -7,8 +7,7 @@ use heck::ToSnakeCase;
 use proc_macro::TokenStream;
 use quote::{ToTokens, TokenStreamExt, quote};
 use syn::{
-    Attribute, Ident, Token, braced, parenthesized, parse::Parse, parse_macro_input,
-    punctuated::Punctuated,
+    braced, ext::IdentExt, parenthesized, parse::Parse, parse_macro_input, punctuated::Punctuated, Attribute, Ident, Token
 };
 
 struct Class {
@@ -129,13 +128,14 @@ impl ToTokens for Variable {
             type_,
         } = self;
         let ident_str = ident.to_string();
+        let ident_unraw_str = ident.unraw().to_string();
 
         let read_ident = Ident::new(&ident_str.to_snake_case(), ident.span());
         tokens.append_all(quote! {
             #(#attributes)*
             fn #read_ident(&self) -> ::com_shim::Result<#type_> {
                 use ::com_shim::{IDispatchExt, VariantTypeExt};
-                ::std::result::Result::Ok(self.get_idispatch().get(#ident_str)?.variant_into()?)
+                ::std::result::Result::Ok(self.get_idispatch().get(#ident_unraw_str)?.variant_into()?)
             }
         });
 
@@ -146,7 +146,7 @@ impl ToTokens for Variable {
                 #(#attributes)*
                 fn #write_ident(&self, value: #type_) -> ::com_shim::Result<()> {
                     use ::com_shim::{IDispatchExt, VariantTypeExt};
-                    let _ = self.get_idispatch().set(#ident_str, ::com_shim::VARIANT::variant_from(value))?;
+                    let _ = self.get_idispatch().set(#ident_unraw_str, ::com_shim::VARIANT::variant_from(value))?;
                     ::std::result::Result::Ok(())
                 }
             });
@@ -170,6 +170,7 @@ impl ToTokens for Function {
             returns,
         } = self;
         let ident_str = ident.to_string();
+        let ident_unraw_str = ident.unraw().to_string();
         let fn_ident = Ident::new(&ident_str.to_snake_case(), ident.span());
         let fn_parameters = parameters.iter().enumerate().map(|(idx, p)| {
             let ident = Ident::new(&format!("p{idx}"), p.span());
@@ -188,8 +189,8 @@ impl ToTokens for Function {
             #(#attributes)*
             fn #fn_ident(&self, #(#fn_parameters),*) -> ::com_shim::Result<#returns_type> {
                 use ::com_shim::{IDispatchExt, VariantTypeExt};
-                let r = self.get_idispatch().call(#ident_str, vec![
-                    #(#parameters)*
+                let r = self.get_idispatch().call(#ident_unraw_str, vec![
+                    #(#parameters),*
                 ])?;
                 ::std::result::Result::Ok(#return_statement)
             }
