@@ -37,6 +37,6 @@ com_shim! {
 
 fn main() {
     // The following call now would trigger a COM call:
-    // let a: GuiTextField;
-    // a.get_list_property("property");
+    // let a: GuiTextField = ();
+    // a.get_list_property("property".to_string());
 }

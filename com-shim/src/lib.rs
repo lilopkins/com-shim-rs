@@ -133,6 +133,12 @@ impl VariantExt for VARIANT {
     }
 }
 
+/// Indicates that this type is also a parent type and can be upcast to it.
+pub trait IsA<T> {
+    /// Upcast this value to it's parent type.
+    fn upcast(&self) -> T;
+}
+
 /// Functions to convert to and from a type that can be stored in a [`VARIANT`].
 pub trait VariantTypeExt<'a, T> {
     /// Convert from a [`VARIANT`] into a type, T.
