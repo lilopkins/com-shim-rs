@@ -189,7 +189,7 @@ impl ToTokens for Function {
             fn #fn_ident(&self, #(#fn_parameters),*) -> ::com_shim::Result<#returns_type> {
                 use ::com_shim::{IDispatchExt, VariantTypeExt};
                 let r = self.get_idispatch().call(#ident_str, vec![
-                    #(#parameters)*
+                    #(#parameters),*
                 ])?;
                 ::std::result::Result::Ok(#return_statement)
             }
