@@ -8,19 +8,19 @@ Easily write interfaces that can read from COM, without worrying about the under
 use com_shim::com_shim;
 
 com_shim! {
-    class GuiComponent {
+    struct GuiComponent {
         Text: String,
     }
 }
 
 com_shim! {
-    class GuiVComponent {
+    struct GuiVComponent {
         fn SetFocus(),
     }
 }
 
 com_shim! {
-    class GuiTextField: GuiVComponent + GuiComponent {
+    struct GuiTextField: GuiVComponent + GuiComponent {
         CaretPosition: i64,
         DisplayedText: String,
         mut Highlighted: bool,

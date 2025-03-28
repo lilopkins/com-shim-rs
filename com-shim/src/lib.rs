@@ -1,12 +1,18 @@
+#![warn(missing_docs)]
+#![warn(clippy::pedantic)]
+#![doc = include_str!("../README.md")]
+
 use std::mem::ManuallyDrop;
 
 use windows::{
     Win32::{
         Foundation::VARIANT_BOOL,
-        System::Com::{DISPATCH_METHOD, DISPATCH_PROPERTYGET, DISPATCH_PROPERTYPUT, DISPPARAMS},
-        System::Variant::{
-            VAR_CHANGE_FLAGS, VARIANT_0_0, VT_BOOL, VT_BSTR, VT_I2, VT_I4, VT_I8, VT_NULL, VT_UI1,
-            VT_UI2, VT_UI4, VT_UI8, VariantChangeType, VariantClear,
+        System::{
+            Com::{DISPATCH_METHOD, DISPATCH_PROPERTYGET, DISPATCH_PROPERTYPUT, DISPPARAMS},
+            Variant::{
+                VAR_CHANGE_FLAGS, VARIANT_0_0, VT_BOOL, VT_BSTR, VT_DISPATCH, VT_I2, VT_I4, VT_I8,
+                VT_NULL, VT_UI1, VT_UI2, VT_UI4, VT_UI8, VariantChangeType, VariantClear,
+            },
         },
     },
     core::{self, BSTR},
@@ -25,6 +31,7 @@ pub trait HasIDispatch<T = Self> {
     fn get_idispatch(&self) -> &IDispatch;
 }
 
+/// Additional functions for working with an [`IDispatch`].
 pub trait IDispatchExt {
     /// Call a function on this IDispatch
     fn call<S>(&self, name: S, args: Vec<VARIANT>) -> Result<VARIANT>
@@ -50,7 +57,7 @@ impl IDispatchExt for IDispatch {
         let iid_null = GUID::zeroed();
         let mut result = VARIANT::null();
         unsafe {
-            log::debug!("Invoking method: {}", name.as_ref());
+            tracing::debug!("Invoking method: {}", name.as_ref());
             self.Invoke(
                 utils::get_method_dispid(self, name)?,
                 &iid_null,
@@ -108,27 +115,10 @@ impl IDispatchExt for IDispatch {
     }
 }
 
+/// Extension functions for a [`VARIANT`].
 pub trait VariantExt {
+    /// Generate a null [`VARIANT`].
     fn null() -> VARIANT;
-    fn from_i16(n: i16) -> VARIANT;
-    fn from_i32(n: i32) -> VARIANT;
-    fn from_i64(n: i64) -> VARIANT;
-    fn from_u8(n: u8) -> VARIANT;
-    fn from_u16(n: u16) -> VARIANT;
-    fn from_u32(n: u32) -> VARIANT;
-    fn from_u64(n: u64) -> VARIANT;
-    fn from_str<S: AsRef<str>>(s: S) -> VARIANT;
-    fn from_bool(b: bool) -> VARIANT;
-    fn to_i16(&self) -> core::Result<i16>;
-    fn to_i32(&self) -> core::Result<i32>;
-    fn to_i64(&self) -> core::Result<i64>;
-    fn to_u8(&self) -> core::Result<u8>;
-    fn to_u16(&self) -> core::Result<u16>;
-    fn to_u32(&self) -> core::Result<u32>;
-    fn to_u64(&self) -> core::Result<u64>;
-    fn to_string(&self) -> core::Result<String>;
-    fn to_bool(&self) -> core::Result<bool>;
-    fn to_idispatch(&self) -> core::Result<&IDispatch>;
 }
 
 impl VariantExt for VARIANT {
@@ -141,100 +131,42 @@ impl VariantExt for VARIANT {
         variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
         variant
     }
-    fn from_i16(n: i16) -> VARIANT {
+}
+
+/// Functions to convert to and from a type that can be stored in a [`VARIANT`].
+pub trait VariantTypeExt<'a, T> {
+    /// Convert from a [`VARIANT`] into a type, T.
+    fn variant_into(&'a self) -> core::Result<T>;
+
+    /// Convert from a type T into a [`VARIANT`].
+    fn variant_from(value: T) -> VARIANT;
+}
+
+impl VariantTypeExt<'_, ()> for VARIANT {
+    fn variant_from(_value: ()) -> VARIANT {
+        VARIANT::null()
+    }
+
+    fn variant_into(&'_ self) -> core::Result<()> {
+        Ok(())
+    }
+}
+
+impl VariantTypeExt<'_, i16> for VARIANT {
+    fn variant_from(value: i16) -> VARIANT {
         let mut variant = VARIANT::default();
         let mut v00 = VARIANT_0_0 {
             vt: VT_I2,
             ..Default::default()
         };
-        v00.Anonymous.iVal = n;
+        v00.Anonymous.iVal = value;
         variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
         variant
     }
-    fn from_i32(n: i32) -> VARIANT {
-        let mut variant = VARIANT::default();
-        let mut v00 = VARIANT_0_0 {
-            vt: VT_I4,
-            ..Default::default()
-        };
-        v00.Anonymous.lVal = n;
-        variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
-        variant
-    }
-    fn from_i64(n: i64) -> VARIANT {
-        let mut variant = VARIANT::default();
-        let mut v00 = VARIANT_0_0 {
-            vt: VT_I8,
-            ..Default::default()
-        };
-        v00.Anonymous.llVal = n;
-        variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
-        variant
-    }
-    fn from_u8(n: u8) -> VARIANT {
-        let mut variant = VARIANT::default();
-        let mut v00 = VARIANT_0_0 {
-            vt: VT_UI1,
-            ..Default::default()
-        };
-        v00.Anonymous.bVal = n;
-        variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
-        variant
-    }
-    fn from_u16(n: u16) -> VARIANT {
-        let mut variant = VARIANT::default();
-        let mut v00 = VARIANT_0_0 {
-            vt: VT_UI2,
-            ..Default::default()
-        };
-        v00.Anonymous.uiVal = n;
-        variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
-        variant
-    }
-    fn from_u32(n: u32) -> VARIANT {
-        let mut variant = VARIANT::default();
-        let mut v00 = VARIANT_0_0 {
-            vt: VT_UI4,
-            ..Default::default()
-        };
-        v00.Anonymous.ulVal = n;
-        variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
-        variant
-    }
-    fn from_u64(n: u64) -> VARIANT {
-        let mut variant = VARIANT::default();
-        let mut v00 = VARIANT_0_0 {
-            vt: VT_UI8,
-            ..Default::default()
-        };
-        v00.Anonymous.ullVal = n;
-        variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
-        variant
-    }
-    fn from_str<S: AsRef<str>>(s: S) -> VARIANT {
-        let mut variant = VARIANT::default();
-        let mut v00 = VARIANT_0_0 {
-            vt: VT_BSTR,
-            ..Default::default()
-        };
-        let bstr = BSTR::from(s.as_ref());
-        v00.Anonymous.bstrVal = ManuallyDrop::new(bstr);
-        variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
-        variant
-    }
-    fn from_bool(b: bool) -> VARIANT {
-        let mut variant = VARIANT::default();
-        let mut v00 = VARIANT_0_0 {
-            vt: VT_BOOL,
-            ..Default::default()
-        };
-        v00.Anonymous.boolVal = VARIANT_BOOL::from(b);
-        variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
-        variant
-    }
-    fn to_i16(&self) -> core::Result<i16> {
+
+    fn variant_into(&self) -> core::Result<i16> {
         unsafe {
-            log::debug!("Own type: {:?}", self.Anonymous.Anonymous.vt);
+            tracing::debug!("Own type: {:?}", self.Anonymous.Anonymous.vt);
             let mut new = VARIANT::default();
             VariantChangeType(&mut new, self, VAR_CHANGE_FLAGS(0), VT_I2)?;
             let v00 = &new.Anonymous.Anonymous;
@@ -243,9 +175,23 @@ impl VariantExt for VARIANT {
             Ok(n)
         }
     }
-    fn to_i32(&self) -> core::Result<i32> {
+}
+
+impl VariantTypeExt<'_, i32> for VARIANT {
+    fn variant_from(value: i32) -> VARIANT {
+        let mut variant = VARIANT::default();
+        let mut v00 = VARIANT_0_0 {
+            vt: VT_I4,
+            ..Default::default()
+        };
+        v00.Anonymous.lVal = value;
+        variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
+        variant
+    }
+
+    fn variant_into(&self) -> core::Result<i32> {
         unsafe {
-            log::debug!("Own type: {:?}", self.Anonymous.Anonymous.vt);
+            tracing::debug!("Own type: {:?}", self.Anonymous.Anonymous.vt);
             let mut new = VARIANT::default();
             VariantChangeType(&mut new, self, VAR_CHANGE_FLAGS(0), VT_I4)?;
             let v00 = &new.Anonymous.Anonymous;
@@ -254,9 +200,23 @@ impl VariantExt for VARIANT {
             Ok(n)
         }
     }
-    fn to_i64(&self) -> core::Result<i64> {
+}
+
+impl VariantTypeExt<'_, i64> for VARIANT {
+    fn variant_from(value: i64) -> VARIANT {
+        let mut variant = VARIANT::default();
+        let mut v00 = VARIANT_0_0 {
+            vt: VT_I8,
+            ..Default::default()
+        };
+        v00.Anonymous.llVal = value;
+        variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
+        variant
+    }
+
+    fn variant_into(&self) -> core::Result<i64> {
         unsafe {
-            log::debug!("Own type: {:?}", self.Anonymous.Anonymous.vt);
+            tracing::debug!("Own type: {:?}", self.Anonymous.Anonymous.vt);
             let mut new = VARIANT::default();
             VariantChangeType(&mut new, self, VAR_CHANGE_FLAGS(0), VT_I8)?;
             let v00 = &new.Anonymous.Anonymous;
@@ -265,9 +225,23 @@ impl VariantExt for VARIANT {
             Ok(n)
         }
     }
-    fn to_u8(&self) -> core::Result<u8> {
+}
+
+impl VariantTypeExt<'_, u8> for VARIANT {
+    fn variant_from(value: u8) -> VARIANT {
+        let mut variant = VARIANT::default();
+        let mut v00 = VARIANT_0_0 {
+            vt: VT_UI1,
+            ..Default::default()
+        };
+        v00.Anonymous.bVal = value;
+        variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
+        variant
+    }
+
+    fn variant_into(&self) -> core::Result<u8> {
         unsafe {
-            log::debug!("Own type: {:?}", self.Anonymous.Anonymous.vt);
+            tracing::debug!("Own type: {:?}", self.Anonymous.Anonymous.vt);
             let mut new = VARIANT::default();
             VariantChangeType(&mut new, self, VAR_CHANGE_FLAGS(0), VT_UI1)?;
             let v00 = &new.Anonymous.Anonymous;
@@ -276,9 +250,23 @@ impl VariantExt for VARIANT {
             Ok(n)
         }
     }
-    fn to_u16(&self) -> core::Result<u16> {
+}
+
+impl VariantTypeExt<'_, u16> for VARIANT {
+    fn variant_from(value: u16) -> VARIANT {
+        let mut variant = VARIANT::default();
+        let mut v00 = VARIANT_0_0 {
+            vt: VT_UI2,
+            ..Default::default()
+        };
+        v00.Anonymous.uiVal = value;
+        variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
+        variant
+    }
+
+    fn variant_into(&self) -> core::Result<u16> {
         unsafe {
-            log::debug!("Own type: {:?}", self.Anonymous.Anonymous.vt);
+            tracing::debug!("Own type: {:?}", self.Anonymous.Anonymous.vt);
             let mut new = VARIANT::default();
             VariantChangeType(&mut new, self, VAR_CHANGE_FLAGS(0), VT_UI2)?;
             let v00 = &new.Anonymous.Anonymous;
@@ -287,9 +275,23 @@ impl VariantExt for VARIANT {
             Ok(n)
         }
     }
-    fn to_u32(&self) -> core::Result<u32> {
+}
+
+impl VariantTypeExt<'_, u32> for VARIANT {
+    fn variant_from(value: u32) -> VARIANT {
+        let mut variant = VARIANT::default();
+        let mut v00 = VARIANT_0_0 {
+            vt: VT_UI4,
+            ..Default::default()
+        };
+        v00.Anonymous.ulVal = value;
+        variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
+        variant
+    }
+
+    fn variant_into(&self) -> core::Result<u32> {
         unsafe {
-            log::debug!("Own type: {:?}", self.Anonymous.Anonymous.vt);
+            tracing::debug!("Own type: {:?}", self.Anonymous.Anonymous.vt);
             let mut new = VARIANT::default();
             VariantChangeType(&mut new, self, VAR_CHANGE_FLAGS(0), VT_UI4)?;
             let v00 = &new.Anonymous.Anonymous;
@@ -298,9 +300,23 @@ impl VariantExt for VARIANT {
             Ok(n)
         }
     }
-    fn to_u64(&self) -> core::Result<u64> {
+}
+
+impl VariantTypeExt<'_, u64> for VARIANT {
+    fn variant_from(value: u64) -> VARIANT {
+        let mut variant = VARIANT::default();
+        let mut v00 = VARIANT_0_0 {
+            vt: VT_UI8,
+            ..Default::default()
+        };
+        v00.Anonymous.ullVal = value;
+        variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
+        variant
+    }
+
+    fn variant_into(&self) -> core::Result<u64> {
         unsafe {
-            log::debug!("Own type: {:?}", self.Anonymous.Anonymous.vt);
+            tracing::debug!("Own type: {:?}", self.Anonymous.Anonymous.vt);
             let mut new = VARIANT::default();
             VariantChangeType(&mut new, self, VAR_CHANGE_FLAGS(0), VT_UI8)?;
             let v00 = &new.Anonymous.Anonymous;
@@ -309,9 +325,24 @@ impl VariantExt for VARIANT {
             Ok(n)
         }
     }
-    fn to_string(&self) -> core::Result<String> {
+}
+
+impl VariantTypeExt<'_, String> for VARIANT {
+    fn variant_from(value: String) -> VARIANT {
+        let mut variant = VARIANT::default();
+        let mut v00 = VARIANT_0_0 {
+            vt: VT_BSTR,
+            ..Default::default()
+        };
+        let bstr = BSTR::from(&value);
+        v00.Anonymous.bstrVal = ManuallyDrop::new(bstr);
+        variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
+        variant
+    }
+
+    fn variant_into(&self) -> core::Result<String> {
         unsafe {
-            log::debug!("Own type: {:?}", self.Anonymous.Anonymous.vt);
+            tracing::debug!("Own type: {:?}", self.Anonymous.Anonymous.vt);
             let mut new = VARIANT::default();
             VariantChangeType(&mut new, self, VAR_CHANGE_FLAGS(0), VT_BSTR)?;
             let v00 = &new.Anonymous.Anonymous;
@@ -320,9 +351,23 @@ impl VariantExt for VARIANT {
             Ok(str)
         }
     }
-    fn to_bool(&self) -> core::Result<bool> {
+}
+
+impl VariantTypeExt<'_, bool> for VARIANT {
+    fn variant_from(value: bool) -> VARIANT {
+        let mut variant = VARIANT::default();
+        let mut v00 = VARIANT_0_0 {
+            vt: VT_BOOL,
+            ..Default::default()
+        };
+        v00.Anonymous.boolVal = VARIANT_BOOL::from(value);
+        variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
+        variant
+    }
+
+    fn variant_into(&self) -> core::Result<bool> {
         unsafe {
-            log::debug!("Own type: {:?}", self.Anonymous.Anonymous.vt);
+            tracing::debug!("Own type: {:?}", self.Anonymous.Anonymous.vt);
             let mut new = VARIANT::default();
             VariantChangeType(&mut new, self, VAR_CHANGE_FLAGS(0), VT_BOOL)?;
             let v00 = &new.Anonymous.Anonymous;
@@ -331,9 +376,23 @@ impl VariantExt for VARIANT {
             Ok(b)
         }
     }
-    fn to_idispatch(&self) -> core::Result<&IDispatch> {
+}
+
+impl<'a> VariantTypeExt<'a, &'a IDispatch> for VARIANT {
+    fn variant_from(value: &'a IDispatch) -> VARIANT {
+        let mut variant = VARIANT::default();
+        let mut v00 = VARIANT_0_0 {
+            vt: VT_DISPATCH,
+            ..Default::default()
+        };
+        v00.Anonymous.pdispVal = ManuallyDrop::new(Some(value.clone()));
+        variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
+        variant
+    }
+
+    fn variant_into(&'a self) -> core::Result<&'a IDispatch> {
         unsafe {
-            log::debug!("Own type: {:?}", self.Anonymous.Anonymous.vt);
+            tracing::debug!("Own type: {:?}", self.Anonymous.Anonymous.vt);
             let v00 = &self.Anonymous.Anonymous;
             let idisp = v00.Anonymous.pdispVal.as_ref().ok_or(core::Error::new(
                 core::HRESULT(0x00123456),
